@@ -1,29 +1,35 @@
 from abc import ABC, abstractmethod
+from typing import Any
 
 
 class Validator(ABC):
-    def __set_name__(self, owner, name):
+    protected_name: str
+
+    def __set_name__(self, owner: type[object], name: str) -> None:
         self.protected_name = f"_{name}"
 
-    def __get__(self, instance, owner=None):
+    def __get__(
+        self, instance: object | None, owner: type[object] | None = None
+    ) -> Any:
         if instance is None:
             return self
         return getattr(instance, self.protected_name)
 
-    def __set__(self, instance, value):
+    def __set__(self, instance: object, value: Any) -> None:
         self.validate(value)
         setattr(instance, self.protected_name, value)
 
     @abstractmethod
-    def validate(self, value):
-        pass
+    def validate(self, value: Any) -> None:
+        raise NotImplementedError
+
 
 class Number(Validator):
-    def __init__(self, min_value, max_value):
+    def __init__(self, min_value: int, max_value: int) -> None:
         self.min_value = min_value
         self.max_value = max_value
 
-    def validate(self, value):
+    def validate(self, value: Any) -> None:
         if type(value) is not int:
             raise TypeError("Quantity should be integer.")
         if not self.min_value <= value <= self.max_value:
@@ -34,10 +40,10 @@ class Number(Validator):
 
 
 class OneOf(Validator):
-    def __init__(self, options):
+    def __init__(self, options: tuple[str, ...]) -> None:
         self.options = options
 
-    def validate(self, value):
+    def validate(self, value: Any) -> None:
         if value not in self.options:
             raise ValueError(f"Expected {value} to be one of {self.options}.")
 
@@ -50,7 +56,15 @@ class BurgerRecipe:
     eggs = Number(0, 2)
     sauce = OneOf(("ketchup", "mayo", "burger"))
 
-    def __init__(self, buns, cheese, tomatoes, cutlets, eggs, sauce):
+    def __init__(
+        self,
+        buns: int,
+        cheese: int,
+        tomatoes: int,
+        cutlets: int,
+        eggs: int,
+        sauce: str,
+    ) -> None:
         self.buns = buns
         self.cheese = cheese
         self.tomatoes = tomatoes
